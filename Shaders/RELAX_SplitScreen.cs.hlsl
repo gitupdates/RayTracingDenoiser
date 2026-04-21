@@ -40,7 +40,7 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
         gOut_Diff[ pixelPos ] = diff * float( viewZ < gDenoisingRange );
 
         #if( NRD_MODE == SH )
-            float4 diffSh = gIn_DiffSh[ checkerboardPos ];
+            RELAX_SH_TYPE diffSh = gIn_DiffSh[ checkerboardPos ];
             gOut_DiffSh[ pixelPos ] = diffSh * float( viewZ < gDenoisingRange );
         #endif
     #endif
@@ -55,7 +55,7 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
         gOut_Spec[ pixelPos ] = spec * float( viewZ < gDenoisingRange );
 
         #if( NRD_MODE == SH )
-            float4 specSh = gIn_SpecSh[ checkerboardPos ];
+            RELAX_SH_TYPE specSh = gIn_SpecSh[ checkerboardPos ];
             gOut_SpecSh[ pixelPos ] = specSh * float( viewZ < gDenoisingRange );
         #endif
     #endif

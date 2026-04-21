@@ -92,8 +92,8 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
     float sumWSpecular = 0.44198 * 0.44198;
     float4 sumSpecularIlluminationAndVariance = centerSpecularIlluminationAndVariance * float4(sumWSpecular.xxx, sumWSpecular * sumWSpecular);
     #if( NRD_MODE == SH )
-        float4 centerSpecularSH = gIn_SpecSh[pixelPos];
-        float4 sumSpecularSH = centerSpecularSH * sumWSpecular;
+        RELAX_SH_TYPE centerSpecularSH = gIn_SpecSh[pixelPos];
+        RELAX_SH_TYPE sumSpecularSH = centerSpecularSH * sumWSpecular;
     #endif
 #endif
 
@@ -122,8 +122,8 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
     float sumWDiffuse = 0.44198 * 0.44198;
     float4 sumDiffuseIlluminationAndVariance = centerDiffuseIlluminationAndVariance * float4(sumWDiffuse.xxx, sumWDiffuse * sumWDiffuse);
     #if( NRD_MODE == SH )
-        float4 centerDiffuseSH = gIn_DiffSh[pixelPos];
-        float4 sumDiffuseSH = centerDiffuseSH * sumWDiffuse;
+        RELAX_SH_TYPE centerDiffuseSH = gIn_DiffSh[pixelPos];
+        RELAX_SH_TYPE sumDiffuseSH = centerDiffuseSH * sumWDiffuse;
     #endif
 #endif
 
@@ -238,7 +238,7 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
         // Luminance output is expected in YCoCg color space in SH mode, converting to YCoCg in last A-Trous pass
         if (gIsLastPass == 1)
             filteredSpecularIlluminationAndVariance.rgb = _NRD_LinearToYCoCg(filteredSpecularIlluminationAndVariance.rgb);
-        gOut_SpecSh[pixelPos] = float4(sumSpecularSH.rgb / sumWSpecular, 0.0);
+        gOut_SpecSh[pixelPos] = sumSpecularSH / sumWSpecular;
     #endif
     if (gIsLastPass == 1)
         filteredSpecularIlluminationAndVariance.w = currHistoryLength;

@@ -52,14 +52,14 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
 #if( NRD_DIFF )
     float4 diffuseIlluminationAnd2ndMomentSum = gIn_Diff[pixelPos];
     #if( NRD_MODE == SH )
-        float4 diffuseSumSH = gIn_DiffSh[pixelPos];
+        RELAX_SH_TYPE diffuseSumSH = gIn_DiffSh[pixelPos];
     #endif
     float diffuseWSum = 1;
 #endif
 #if( NRD_SPEC )
     float4 specularIlluminationAnd2ndMomentSum = gIn_Spec[pixelPos];
     #if( NRD_MODE == SH )
-        float4 specularSumSH = gIn_SpecSh[pixelPos];
+        RELAX_SH_TYPE specularSumSH = gIn_SpecSh[pixelPos];
     #endif
     float specularWSum = 1;
     float2 specularNormalWeightParams = GetNormalWeightParams_ATrous(
@@ -112,7 +112,7 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
                 float4 sampleDiffuseIlluminationAnd2ndMoment = gIn_Diff[samplePosInt];
                 diffuseIlluminationAnd2ndMomentSum += sampleDiffuseIlluminationAnd2ndMoment * diffuseW;
                 #if( NRD_MODE == SH )
-                    float4 sampleDiffuseSH = gIn_DiffSh[samplePosInt];
+                    RELAX_SH_TYPE sampleDiffuseSH = gIn_DiffSh[samplePosInt];
                     diffuseSumSH += sampleDiffuseSH * diffuseW;
                 #endif
                 diffuseWSum += diffuseW;
@@ -134,7 +134,7 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
                 float4 sampleSpecularIlluminationAnd2ndMoment = gIn_Spec[samplePosInt];
                 specularIlluminationAnd2ndMomentSum += sampleSpecularIlluminationAnd2ndMoment * specularW;
                 #if( NRD_MODE == SH )
-                    float4 sampleSpecularSH = gIn_SpecSh[samplePosInt];
+                    RELAX_SH_TYPE sampleSpecularSH = gIn_SpecSh[samplePosInt];
                     specularSumSH += sampleSpecularSH * specularW;
                 #endif
                 specularWSum += specularW;
@@ -157,7 +157,7 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
     float4 outSpecularIlluminationAnd2ndMoment = specularIlluminationAnd2ndMomentSum / specularWSum;
     gOut_Spec[pixelPos] = outSpecularIlluminationAnd2ndMoment;
     #if( NRD_MODE == SH )
-        gOut_SpecSh[pixelPos] = float4(specularSumSH.rgb / specularWSum, 0.0);
+        gOut_SpecSh[pixelPos] = specularSumSH / specularWSum;
     #endif
 #endif
 }

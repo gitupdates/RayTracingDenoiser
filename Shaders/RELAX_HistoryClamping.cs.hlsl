@@ -240,8 +240,8 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
     gOut_SpecFast[pixelPos.xy] = outSpecularResponsive;
 
 #if( NRD_MODE == SH )
-    float4 specularSH = gIn_SpecSh[pixelPos.xy];
-    float4 specularResponsiveSH = gIn_SpecShFast[pixelPos.xy];
+    RELAX_SH_TYPE specularSH = gIn_SpecSh[pixelPos.xy];
+    RELAX_SH_TYPE specularResponsiveSH = gIn_SpecShFast[pixelPos.xy];
 
     gOut_SpecSh[pixelPos.xy] = lerp(specularSH, specularResponsiveSH, specClampingFactor);
     gOut_SpecShFast[pixelPos.xy] = specularResponsiveSH;
@@ -341,8 +341,8 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
     gOut_DiffFast[pixelPos.xy] = outDiffuseResponsive;
 
     #if( NRD_MODE == SH )
-        float4 diffuseSH = gIn_DiffSh[pixelPos.xy];
-        float4 diffuseResponsiveSH = gIn_DiffShFast[pixelPos.xy];
+        RELAX_SH_TYPE diffuseSH = gIn_DiffSh[pixelPos.xy];
+        RELAX_SH_TYPE diffuseResponsiveSH = gIn_DiffShFast[pixelPos.xy];
 
         gOut_DiffSh[pixelPos.xy] = lerp(diffuseSH, diffuseResponsiveSH, diffClampingFactor);
         gOut_DiffShFast[pixelPos.xy] = diffuseResponsiveSH;

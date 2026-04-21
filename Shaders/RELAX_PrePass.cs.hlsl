@@ -95,7 +95,7 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
     // Reading diffuse & resolving diffuse checkerboard
     float4 diffuseIllumination = gIn_Diff[diffPos];
     #if( NRD_MODE == SH )
-        float4 diffuseSH = gIn_DiffSh[diffPos];
+        RELAX_SH_TYPE diffuseSH = gIn_DiffSh[diffPos];
     #endif
 
 #if( NRD_SUPPORTS_CHECKERBOARD == 1 )
@@ -115,8 +115,8 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
         diffuseIllumination = d0 * wc.x + d1 * wc.y;
 
         #if( NRD_MODE == SH )
-            float4 d0SH = gIn_DiffSh[checkerboardPos.xz];
-            float4 d1SH = gIn_DiffSh[checkerboardPos.yz];
+            RELAX_SH_TYPE d0SH = gIn_DiffSh[checkerboardPos.xz];
+            RELAX_SH_TYPE d1SH = gIn_DiffSh[checkerboardPos.yz];
             d0SH = Denanify( wc.x, d0SH );
             d1SH = Denanify( wc.y, d1SH );
             diffuseSH = d0SH * wc.x + d1SH * wc.y;
@@ -198,7 +198,7 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
 
             diffuseIllumination += sampleDiffuseIllumination * sampleWeight;
             #if( NRD_MODE == SH )
-                float4 sampleDiffuseSH = gIn_DiffSh.SampleLevel(gNearestClamp, checkerboardUvScaled, 0);
+                RELAX_SH_TYPE sampleDiffuseSH = gIn_DiffSh.SampleLevel(gNearestClamp, checkerboardUvScaled, 0);
                 sampleDiffuseSH = Denanify( sampleWeight, sampleDiffuseSH );
                 diffuseSH += sampleDiffuseSH * sampleWeight;
             #endif
@@ -232,7 +232,7 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
     // Reading specular & resolving specular checkerboard
     float4 specularIllumination = gIn_Spec[specPos];
     #if( NRD_MODE == SH )
-        float4 specularSH = gIn_SpecSh[specPos];
+        RELAX_SH_TYPE specularSH = gIn_SpecSh[specPos];
     #endif
 
 #if( NRD_SUPPORTS_CHECKERBOARD == 1 )
@@ -252,8 +252,8 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
         specularIllumination = s0 * wc.x + s1 * wc.y;
 
         #if( NRD_MODE == SH )
-            float4 s0SH = gIn_SpecSh[checkerboardPos.xz];
-            float4 s1SH = gIn_SpecSh[checkerboardPos.yz];
+            RELAX_SH_TYPE s0SH = gIn_SpecSh[checkerboardPos.xz];
+            RELAX_SH_TYPE s1SH = gIn_SpecSh[checkerboardPos.yz];
             s0SH = Denanify( wc.x, s0SH );
             s1SH = Denanify( wc.y, s1SH );
             specularSH = s0SH * wc.x + s1SH * wc.y;
@@ -366,7 +366,7 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
 
             specularIllumination.rgb += sampleSpecularIllumination.rgb * sampleWeight;
             #if( NRD_MODE == SH )
-                float4 sampleSpecularSH = gIn_SpecSh.SampleLevel(gNearestClamp, checkerboardUvScaled, 0);
+                RELAX_SH_TYPE sampleSpecularSH = gIn_SpecSh.SampleLevel(gNearestClamp, checkerboardUvScaled, 0);
                 sampleSpecularSH = Denanify( sampleWeight, sampleSpecularSH );
                 specularSH += sampleSpecularSH * sampleWeight;
             #endif
