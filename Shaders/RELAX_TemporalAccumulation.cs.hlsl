@@ -918,7 +918,7 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
 
         float4 accumulatedSpecularSH = lerp(accumulatedSpecularSMBSH, accumulatedSpecularVMBSH, virtualHistoryAmount);
         float4 accumulatedSpecularResponsiveSH = lerp(accumulatedSpecularSMBResponsiveSH, accumulatedSpecularVMBResponsiveSH, virtualHistoryAmount);
-        gOut_SpecSh[pixelPos] = float4(accumulatedSpecularSH.rgb, currentRoughnessModified);
+        gOut_SpecSh[pixelPos] = float4(accumulatedSpecularSH.rgb, 0.0);
         gOut_SpecShFast[pixelPos] = accumulatedSpecularResponsiveSH;
     #endif
 

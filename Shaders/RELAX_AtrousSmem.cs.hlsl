@@ -227,7 +227,6 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
         float4 sumSpecularIlluminationAnd2ndMoment = 0;
         #if( NRD_MODE == SH )
             float4 sumSpecularSH = 0;
-            float roughnessModified = s_SpecSH[sharedMemoryIndex.y][sharedMemoryIndex.x].w;
         #endif
         float3 centerV = -normalize(centerWorldPos);
 #endif
@@ -357,7 +356,7 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
         float4 filteredSpecularIlluminationAndVariance = float4(sumSpecularIlluminationAnd2ndMoment.rgb, specularVariance);
         gOut_Spec_Variance[pixelPos] = filteredSpecularIlluminationAndVariance;
         #if( NRD_MODE == SH )
-            gOut_SpecSh[pixelPos] = float4(sumSpecularSH.rgb / sumWSpecular, roughnessModified);
+            gOut_SpecSh[pixelPos] = float4(sumSpecularSH.rgb / sumWSpecular, 0.0);
         #endif
 #endif
 #if( NRD_DIFF )
@@ -464,8 +463,7 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
         specularVariance *= boost;
         gOut_Spec_Variance[pixelPos] = float4(sumSpecularIllumination, specularVariance);
         #if( NRD_MODE == SH )
-            float roughnessModified = s_SpecSH[sharedMemoryIndex.y][sharedMemoryIndex.x].w;
-            gOut_SpecSh[pixelPos] = float4(sumSpecularSH.rgb / sumWSpecularIllumination, roughnessModified);
+            gOut_SpecSh[pixelPos] = float4(sumSpecularSH.rgb / sumWSpecularIllumination, 0.0);
         #endif
 #endif
 

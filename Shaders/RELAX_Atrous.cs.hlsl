@@ -94,7 +94,6 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
     #if( NRD_MODE == SH )
         float4 centerSpecularSH = gIn_SpecSh[pixelPos];
         float4 sumSpecularSH = centerSpecularSH * sumWSpecular;
-        float roughnessModified = centerSpecularSH.w;
     #endif
 #endif
 
@@ -239,7 +238,7 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
         // Luminance output is expected in YCoCg color space in SH mode, converting to YCoCg in last A-Trous pass
         if (gIsLastPass == 1)
             filteredSpecularIlluminationAndVariance.rgb = _NRD_LinearToYCoCg(filteredSpecularIlluminationAndVariance.rgb);
-        gOut_SpecSh[pixelPos] = float4(sumSpecularSH.rgb / sumWSpecular, roughnessModified);
+        gOut_SpecSh[pixelPos] = float4(sumSpecularSH.rgb / sumWSpecular, 0.0);
     #endif
     if (gIsLastPass == 1)
         filteredSpecularIlluminationAndVariance.w = currHistoryLength;

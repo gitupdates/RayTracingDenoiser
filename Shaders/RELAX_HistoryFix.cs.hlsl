@@ -60,7 +60,6 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
     float4 specularIlluminationAnd2ndMomentSum = gIn_Spec[pixelPos];
     #if( NRD_MODE == SH )
         float4 specularSumSH = gIn_SpecSh[pixelPos];
-        float roughnessModified = specularSumSH.w;
     #endif
     float specularWSum = 1;
     float2 specularNormalWeightParams = GetNormalWeightParams_ATrous(
@@ -158,7 +157,7 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
     float4 outSpecularIlluminationAnd2ndMoment = specularIlluminationAnd2ndMomentSum / specularWSum;
     gOut_Spec[pixelPos] = outSpecularIlluminationAnd2ndMoment;
     #if( NRD_MODE == SH )
-        gOut_SpecSh[pixelPos] = float4(specularSumSH.rgb / specularWSum, roughnessModified);
+        gOut_SpecSh[pixelPos] = float4(specularSumSH.rgb / specularWSum, 0.0);
     #endif
 #endif
 }

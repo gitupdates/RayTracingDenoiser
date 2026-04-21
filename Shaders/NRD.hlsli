@@ -1001,11 +1001,6 @@ float3 NRD_SG_ExtractDirection( NRD_SG sg )
     return _NRD_SG_ExtractDirection( sg );
 }
 
-float NRD_SG_ExtractRoughnessAA( NRD_SG sg )
-{
-    return sg.sharpness;
-}
-
 void NRD_SG_Rotate( inout NRD_SG sg, float3x3 rotation )
 {
     sg.c1 = mul( rotation, sg.c1 );

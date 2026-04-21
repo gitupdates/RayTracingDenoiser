@@ -230,7 +230,7 @@ A single NRD instance can now include any combination of denoisers, including re
 - *SIGMA*:
   - removed `blurRadiusScale`
   - exposed `lightDirection`, which is needed only for directional light sources
-  - exposed `stabilizationStrength'
+  - exposed `stabilizationStrength`
   - clarified usage:
     - `float shadow = SIGMA_BackEnd_UnpackShadow( OUT_SHADOW_TRANSLUCENCY );`
     - `float3 translucentShadow = SIGMA_BackEnd_UnpackShadow( OUT_SHADOW_TRANSLUCENCY ).yzw;`
@@ -338,6 +338,7 @@ A single NRD instance can now include any combination of denoisers, including re
 - *API*:
   - `IN_DIFF_CONFIDENCE` and `IN_SPEC_CONFIDENCE` can be provided at lower resolution (linearly upscaled)
   - added "HISTORY CONFIDENCE" section to README
+  - removed `NRD_SG_ExtractRoughnessAA` (never used outside of the sample, led to mismatches between "in" and "out" material demodulation factors)
 - *REBLUR*:
   - `HitDistanceParameters` renamed to `ReblurHitDistanceParameters` (no changes in meaning)
   - removed `ReblurHitDistanceParameters::D`, which was a left over from antient times (`smc` is used instead under the hood, it's a remapped `roughness`)
