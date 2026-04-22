@@ -1052,7 +1052,7 @@ float3 NRD_SG_ResolveDiffuse( NRD_SG sg, float3 N, float3 V, float roughness )
 float3 NRD_SG_ResolveSpecular( NRD_SG sg, float3 N, float3 V, float roughness )
 {
     // Clamp roughness to avoid numerical imprecisions
-    roughness = max( roughness, 0.03 );
+    roughness = max( roughness, 0.05 );
 
     float m = roughness * roughness;
     float m2 = m * m;
