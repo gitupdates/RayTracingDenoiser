@@ -130,6 +130,7 @@ namespace nrd
         float timeDeltaBetweenFrames = 0.0f;
 
         // (units > 0) - use TLAS or tracing range
+        // Pixels with "viewZ < denoisingRange" are considered valid, others are ignored
         // It's highly recommended to use "viewZ > denoisingRange" for INF (sky) pixels
         float denoisingRange = 500000.0f;
 

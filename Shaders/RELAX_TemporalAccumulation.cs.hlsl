@@ -382,7 +382,7 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
 
     // Early out if linearZ is beyond denoising range
     float currentLinearZ = UnpackViewZ(gIn_ViewZ[WithRectOrigin(pixelPos)]);
-    if (currentLinearZ > gDenoisingRange)
+    if (!IsInDenoisingRange(currentLinearZ))
         return;
 
     int2 sharedMemoryIndex = threadPos.xy + int2(NRD_BORDER, NRD_BORDER);

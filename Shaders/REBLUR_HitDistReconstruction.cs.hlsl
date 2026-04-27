@@ -66,7 +66,7 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
     // Early out
     int2 smemPos = threadPos + NRD_BORDER;
     float3 center = s_HitDist_ViewZ[ smemPos.y ][ smemPos.x ];
-    if( center.z > gDenoisingRange )
+    if( !IsInDenoisingRange( center.z ) )
         return;
 
     // Center data
@@ -113,7 +113,7 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
             float NoX = dot( Nv, Xvs );
 
             w *= ComputeWeight( NoX, geometryWeightParams.x, geometryWeightParams.y );
-            w = data.z < gDenoisingRange ? w : 0.0; // |NoX| can be ~0 if "data.z" is out of range
+            w = IsInDenoisingRange( data.z ) ? w : 0.0; // |NoX| can be ~0 if "data.z" is out of range
 
             float2 ww = w;
             #if( REBLUR_PERFORMANCE_MODE == 0 )

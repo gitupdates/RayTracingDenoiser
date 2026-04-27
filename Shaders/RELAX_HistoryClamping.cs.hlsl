@@ -33,7 +33,7 @@ void Preload(uint2 sharedPos, int2 globalPos)
     globalPos = clamp(globalPos, 0, gRectSize - 1.0);
 
     float viewZ = gIn_ViewZ[globalPos];
-    float isValid = float(viewZ < gDenoisingRange);
+    float isValid = float(IsInDenoisingRange( viewZ ));
 
     #if( NRD_SPEC )
         float4 specularResponsive = gIn_SpecFast[globalPos];

@@ -239,7 +239,7 @@ license agreement from NVIDIA CORPORATION is strictly prohibited.
         #if( REBLUR_SPATIAL_LOBE == REBLUR_SPEC )
             w *= ComputeWeight( Ns.w, roughnessWeightParams.x, roughnessWeightParams.y );
         #endif
-            w = zs < gDenoisingRange ? w : 0.0; // |NoX| can be ~0 if "zs" is out of range
+            w = IsInDenoisingRange( zs ) ? w : 0.0; // |NoX| can be ~0 if "zs" is out of range
 
             REBLUR_TYPE s = INPUT[ int2( checkerboardX, pos.y ) ];
             s = Denanify( w, s );

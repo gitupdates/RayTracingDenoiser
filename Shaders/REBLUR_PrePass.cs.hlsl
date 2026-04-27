@@ -30,7 +30,7 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
 
     // Early out
     float viewZ = UnpackViewZ( gIn_ViewZ[ WithRectOrigin( pixelPos ) ] );
-    if( viewZ > gDenoisingRange )
+    if( !IsInDenoisingRange( viewZ ) )
         return;
 
     // Center data
@@ -60,8 +60,8 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
     float viewZ1 = UnpackViewZ( gIn_ViewZ[ WithRectOrigin( checkerboardPos.yz ) ] );
     float disocclusionThresholdCheckerboard = GetDisocclusionThreshold( NRD_DISOCCLUSION_THRESHOLD, frustumSize, NoV );
     float2 wc = GetDisocclusionWeight( float2( viewZ0, viewZ1 ), viewZ, disocclusionThresholdCheckerboard );
-    wc.x = ( viewZ0 > gDenoisingRange || pixelPos.x < 1 ) ? 0.0 : wc.x;
-    wc.y = ( viewZ1 > gDenoisingRange || pixelPos.x >= gRectSizeMinusOne.x ) ? 0.0 : wc.y;
+    wc.x = ( !IsInDenoisingRange( viewZ0 ) || pixelPos.x < 1 ) ? 0.0 : wc.x;
+    wc.y = ( !IsInDenoisingRange( viewZ1 ) || pixelPos.x >= gRectSizeMinusOne.x ) ? 0.0 : wc.y;
     wc *= Math::PositiveRcp( wc.x + wc.y );
     checkerboardPos.xy >>= 1;
 #endif

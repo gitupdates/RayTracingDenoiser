@@ -242,6 +242,7 @@ static const float3 g_Special8[ 8 ] =
 #endif
 
 #define UnpackViewZ( z )                        abs( z * gViewZScale )
+#define IsInDenoisingRange( z )                 ( z < gDenoisingRange ) // "!IsInDenoisingRange( viewZ )" is NAN safe
 
 float PixelRadiusToWorld( float unproject, float orthoMode, float pixelRadius, float viewZ )
 {

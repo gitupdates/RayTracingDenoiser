@@ -33,7 +33,7 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
     // Tile-based early out and viewZ-based early out
     float isSky = gIn_Tiles[ pixelPos >> 4 ].x;
     float viewZ = UnpackViewZ( viewZpacked );
-    if( isSky != 0.0 || any( pixelPos > gRectSizeMinusOne ) || viewZ > gDenoisingRange )
+    if( isSky != 0.0 || any( pixelPos > gRectSizeMinusOne ) || !IsInDenoisingRange( viewZ ) )
         return;
 
     // Center data

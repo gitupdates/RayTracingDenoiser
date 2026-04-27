@@ -73,7 +73,7 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
     float3 Xv = Geometry::ReconstructViewPosition( viewportUv, gFrustum, abs( viewZ ), gOrthoMode );
     float3 X = Geometry::RotateVector( gViewToWorld, Xv );
 
-    bool isInf = abs( viewZ ) > gDenoisingRange;
+    bool isInf = !IsInDenoisingRange( abs( viewZ ) );
     bool checkerboard = Sequence::CheckerBoard( pixelPos >> 2, 0 );
 
     uint4 textState = Text::Init( pixelPos, viewportId * gResourceSize * VIEWPORT_SIZE + OFFSET, 1 );

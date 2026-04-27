@@ -33,7 +33,7 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
 
     // Early out if linearZ is beyond denoising range
     float centerViewZ = UnpackViewZ(gIn_ViewZ[WithRectOrigin(pixelPos)]);
-    if (centerViewZ > gDenoisingRange)
+    if (!IsInDenoisingRange(centerViewZ))
         return;
 
     // Checkerboard resolve weights
@@ -64,8 +64,8 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
     #endif
 
         checkerboardResolveWeights = GetBilateralWeight(float2(viewZ0, viewZ1), centerViewZ);
-        checkerboardResolveWeights.x = (viewZ0 > gDenoisingRange || pixelPos.x < 1) ? 0.0 : checkerboardResolveWeights.x;
-        checkerboardResolveWeights.y = (viewZ1 > gDenoisingRange || pixelPos.x > gRectSize.x - 2) ? 0.0 : checkerboardResolveWeights.y;
+        checkerboardResolveWeights.x = (!IsInDenoisingRange(viewZ0) || pixelPos.x < 1) ? 0.0 : checkerboardResolveWeights.x;
+        checkerboardResolveWeights.y = (!IsInDenoisingRange(viewZ1) || pixelPos.x > gRectSize.x - 2) ? 0.0 : checkerboardResolveWeights.y;
     }
 
     checkerboardPos.xy >>= 1;
@@ -174,7 +174,7 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
 
             // Sample weight
             float sampleWeight = IsInScreenNearest(uv);
-            sampleWeight *= float(sampleViewZ < gDenoisingRange);
+            sampleWeight *= IsInDenoisingRange(sampleViewZ);
             sampleWeight *= CompareMaterials(centerMaterialID, sampleMaterialID, gDiffMinMaterial);
 
             sampleWeight *= GetPlaneDistanceWeight(
@@ -331,7 +331,7 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
 
             // Sample weight
             float sampleWeight = IsInScreenNearest(uv);
-            sampleWeight *= float(sampleViewZ < gDenoisingRange);
+            sampleWeight *= IsInDenoisingRange(sampleViewZ);
             sampleWeight *= CompareMaterials(centerMaterialID, sampleMaterialID, gSpecMinMaterial);
             sampleWeight *= ComputeWeight(sampleRoughness, roughnessWeightParams.x, roughnessWeightParams.y);
 

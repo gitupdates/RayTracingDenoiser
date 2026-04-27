@@ -64,7 +64,7 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
     float viewZ = UnpackViewZ( gIn_ViewZ[ WithRectOrigin( pixelPos ) ] );
 
     // Early out #1
-    if( isSky != 0.0 || any( pixelPos > gRectSizeMinusOne ) || viewZ > gDenoisingRange )
+    if( isSky != 0.0 || any( pixelPos > gRectSizeMinusOne ) || !IsInDenoisingRange( viewZ ) )
         return;
 
     // Early out #2

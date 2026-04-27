@@ -34,11 +34,11 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
         checkerboardPos.x = pixelPos.x >> ( gDiffCheckerboard != 2 ? 1 : 0 );
 
         REBLUR_TYPE diff = gIn_Diff[ checkerboardPos ];
-        gOut_Diff[ pixelPos ] = diff * float( viewZ < gDenoisingRange );
+        gOut_Diff[ pixelPos ] = diff * float( IsInDenoisingRange( viewZ ) );
 
         #if( NRD_MODE == SH )
             REBLUR_SH_TYPE diffSh = gIn_DiffSh[ checkerboardPos ];
-            gOut_DiffSh[ pixelPos ] = diffSh * float( viewZ < gDenoisingRange );
+            gOut_DiffSh[ pixelPos ] = diffSh * float( IsInDenoisingRange( viewZ ) );
         #endif
     #endif
 
@@ -46,11 +46,11 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
         checkerboardPos.x = pixelPos.x >> ( gSpecCheckerboard != 2 ? 1 : 0 );
 
         REBLUR_TYPE spec = gIn_Spec[ checkerboardPos ];
-        gOut_Spec[ pixelPos ] = spec * float( viewZ < gDenoisingRange );
+        gOut_Spec[ pixelPos ] = spec * float( IsInDenoisingRange( viewZ ) );
 
         #if( NRD_MODE == SH )
             REBLUR_SH_TYPE specSh = gIn_SpecSh[ checkerboardPos ];
-            gOut_SpecSh[ pixelPos ] = specSh * float( viewZ < gDenoisingRange );
+            gOut_SpecSh[ pixelPos ] = specSh * float( IsInDenoisingRange( viewZ ) );
         #endif
     #endif
 }

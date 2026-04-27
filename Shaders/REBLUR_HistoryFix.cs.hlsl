@@ -29,12 +29,12 @@ void Preload( uint2 sharedPos, int2 globalPos )
 
     #if( NRD_DIFF )
         float diffFast = gIn_DiffFast[ globalPos ];
-        s_DiffLuma[ sharedPos.y ][ sharedPos.x ] = viewZ > gDenoisingRange ? REBLUR_INVALID : diffFast;
+        s_DiffLuma[ sharedPos.y ][ sharedPos.x ] = !IsInDenoisingRange( viewZ ) ? REBLUR_INVALID : diffFast;
     #endif
 
     #if( NRD_SPEC )
         float specFast = gIn_SpecFast[ globalPos ];
-        s_SpecLuma[ sharedPos.y ][ sharedPos.x ] = viewZ > gDenoisingRange ? REBLUR_INVALID : specFast;
+        s_SpecLuma[ sharedPos.y ][ sharedPos.x ] = !IsInDenoisingRange( viewZ ) ? REBLUR_INVALID : specFast;
     #endif
 }
 
@@ -56,7 +56,7 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
 
     // Early out
     float viewZ = UnpackViewZ( gIn_ViewZ[ WithRectOrigin( pixelPos ) ] );
-    if( viewZ > gDenoisingRange )
+    if( !IsInDenoisingRange( viewZ ) )
         return;
 
     // Center data
@@ -167,7 +167,7 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
                     float w = ComputeWeight( NoX, geometryWeightParams.x, geometryWeightParams.y );
                     w *= CompareMaterials( materialID, materialIDs, gDiffMinMaterial );
                     w *= ComputeExponentialWeight( angle, normalWeightParam, 0.0 );
-                    w = zs < gDenoisingRange ? w : 0.0; // |NoX| can be ~0 if "zs" is out of range
+                    w = IsInDenoisingRange( zs ) ? w : 0.0; // |NoX| can be ~0 if "zs" is out of range
                     // gaussian weight is not needed
 
                     #if( REBLUR_PERFORMANCE_MODE == 0 )
@@ -379,7 +379,7 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
                     w *= CompareMaterials( materialID, materialIDs, gSpecMinMaterial );
                     w *= ComputeExponentialWeight( angle, normalWeightParam, 0.0 );
                     w *= ComputeExponentialWeight( Ns.w * Ns.w, relaxedRoughnessWeightParams.x, relaxedRoughnessWeightParams.y );
-                    w = zs < gDenoisingRange ? w : 0.0; // |NoX| can be ~0 if "zs" is out of range
+                    w = IsInDenoisingRange( zs ) ? w : 0.0; // |NoX| can be ~0 if "zs" is out of range
                     // gaussian weight is not needed
 
                     #if( REBLUR_PERFORMANCE_MODE == 0 )

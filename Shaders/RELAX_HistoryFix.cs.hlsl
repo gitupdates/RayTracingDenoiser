@@ -37,7 +37,7 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
     // Early out if no disocclusion detected
     float centerViewZ = UnpackViewZ(gIn_ViewZ[pixelPos]);
     float historyLength = 255.0 * gIn_HistoryLength[pixelPos];
-    if ((centerViewZ > gDenoisingRange) || (historyLength > gHistoryFixFrameNum || gHistoryFixFrameNum == 1.0))
+    if ((!IsInDenoisingRange( centerViewZ )) || (historyLength > gHistoryFixFrameNum || gHistoryFixFrameNum == 1.0))
         return;
 
     // Loading center data
@@ -99,7 +99,7 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
             float3 sampleWorldPos = GetCurrentWorldPosFromPixelPos(samplePosInt, sampleViewZ);
 
             float geometryWeight = GetPlaneDistanceWeight_Atrous(centerWorldPos, centerNormal, sampleWorldPos, depthThreshold);
-            geometryWeight = sampleViewZ < gDenoisingRange ? geometryWeight : 0.0;
+            geometryWeight = IsInDenoisingRange( sampleViewZ ) ? geometryWeight : 0.0;
 
 #if( NRD_DIFF )
             // Summing up diffuse result

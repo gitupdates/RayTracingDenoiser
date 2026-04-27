@@ -30,7 +30,7 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
 
     // Early out
     float viewZ = UnpackViewZ( gIn_ViewZ[ pixelPos ] );
-    if( viewZ > gDenoisingRange )
+    if( !IsInDenoisingRange( viewZ ) )
         return; // IMPORTANT: no data output, must be rejected by the "viewZ" check!
 
     // Center data

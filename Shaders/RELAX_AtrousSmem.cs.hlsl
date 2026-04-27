@@ -135,7 +135,7 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
     int2 sharedMemoryIndex = threadPos.xy + int2(NRD_BORDER, NRD_BORDER);
     float4 normalRoughness = s_Normal_Roughness[sharedMemoryIndex.y][sharedMemoryIndex.x];
     float centerViewZ = UnpackViewZ(viewZpacked);
-    if (centerViewZ > gDenoisingRange)
+    if (!IsInDenoisingRange( centerViewZ ))
     {
         // Setting normal and roughness to close to zero for out of range pixels
         normalRoughness = 1.0 / 255.0;
@@ -155,7 +155,7 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
         return;
 
     // Early out if linearZ is beyond denoising range
-    if (centerViewZ > gDenoisingRange)
+    if (!IsInDenoisingRange( centerViewZ ))
         return;
 
     float2 pixelUv = ( pixelPos + 0.5 ) * gRectSizeInv;

@@ -29,12 +29,12 @@ void Preload( uint2 sharedPos, int2 globalPos )
 
     #if( NRD_DIFF )
         float diffLuma = GetLuma( gIn_Diff[ globalPos ] );
-        s_DiffLuma[ sharedPos.y ][ sharedPos.x ] = viewZ > gDenoisingRange ? REBLUR_INVALID : diffLuma;
+        s_DiffLuma[ sharedPos.y ][ sharedPos.x ] = !IsInDenoisingRange( viewZ ) ? REBLUR_INVALID : diffLuma;
     #endif
 
     #if( NRD_SPEC )
         float specLuma = GetLuma( gIn_Spec[ globalPos ] );
-        s_SpecLuma[ sharedPos.y ][ sharedPos.x ] = viewZ > gDenoisingRange ? REBLUR_INVALID : specLuma;
+        s_SpecLuma[ sharedPos.y ][ sharedPos.x ] = !IsInDenoisingRange( viewZ ) ? REBLUR_INVALID : specLuma;
     #endif
 }
 
@@ -53,7 +53,7 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
 
     // Early out
     float viewZ = UnpackViewZ( gIn_ViewZ[ WithRectOrigin( pixelPos ) ] );
-    if( viewZ > gDenoisingRange )
+    if( !IsInDenoisingRange( viewZ ) )
         return; // IMPORTANT: no data output, must be rejected by the "viewZ" check!
 
     // Position

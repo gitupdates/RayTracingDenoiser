@@ -59,7 +59,7 @@ void Preload( uint2 sharedPos, int2 globalPos )
 
         float viewZ = UnpackViewZ( gIn_ViewZ[ WithRectOrigin( globalPos ) ] );
 
-        s_HitDistForTracking[ sharedPos.y ][ sharedPos.x ] = ( hitDist == 0.0 || viewZ > gDenoisingRange ) ? NRD_INF : hitDist; // for "min"
+        s_HitDistForTracking[ sharedPos.y ][ sharedPos.x ] = ( hitDist == 0.0 || !IsInDenoisingRange( viewZ ) ) ? NRD_INF : hitDist; // for "min"
     #endif
 }
 
@@ -78,7 +78,7 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
 
     // Early out
     float viewZ = UnpackViewZ( gIn_ViewZ[ WithRectOrigin( pixelPos ) ] );
-    if( viewZ > gDenoisingRange )
+    if( !IsInDenoisingRange( viewZ ) )
         return;
 
     // Current position
@@ -210,19 +210,19 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
         uint2 p = uint2( smbBilinearFilter.origin );
         float sum = 0.0;
 
-        float w = float( prevViewZ0.z < gDenoisingRange );
+        float w = float( IsInDenoisingRange( prevViewZ0.z ) );
         smbNavg = NRD_FrontEnd_UnpackNormalAndRoughness( gPrev_Normal_Roughness[ p ] ).xyz * w;
         sum += w;
 
-        w = float( prevViewZ1.y < gDenoisingRange );
+        w = float( IsInDenoisingRange( prevViewZ1.y ) );
         smbNavg += NRD_FrontEnd_UnpackNormalAndRoughness( gPrev_Normal_Roughness[ p + uint2( 1, 0 ) ] ).xyz * w;
         sum += w;
 
-        w = float( prevViewZ2.y < gDenoisingRange );
+        w = float( IsInDenoisingRange( prevViewZ2.y ) );
         smbNavg += NRD_FrontEnd_UnpackNormalAndRoughness( gPrev_Normal_Roughness[ p + uint2( 0, 1 ) ] ).xyz * w;
         sum += w;
 
-        w = float( prevViewZ3.x < gDenoisingRange );
+        w = float( IsInDenoisingRange( prevViewZ3.x ) );
         smbNavg += NRD_FrontEnd_UnpackNormalAndRoughness( gPrev_Normal_Roughness[ p + uint2( 1, 1 ) ] ).xyz * w;
         sum += w;
 
@@ -351,8 +351,8 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
         float viewZ1 = UnpackViewZ( gIn_ViewZ[ WithRectOrigin( checkerboardPos.yz ) ] );
         float disocclusionThresholdCheckerboard = GetDisocclusionThreshold( NRD_DISOCCLUSION_THRESHOLD, frustumSize, NoV );
         float2 wc = GetDisocclusionWeight( float2( viewZ0, viewZ1 ), viewZ, disocclusionThresholdCheckerboard );
-        wc.x = ( viewZ0 > gDenoisingRange || pixelPos.x < 1 ) ? 0.0 : wc.x;
-        wc.y = ( viewZ1 > gDenoisingRange || pixelPos.x >= gRectSizeMinusOne.x ) ? 0.0 : wc.y;
+        wc.x = ( !IsInDenoisingRange( viewZ0 ) || pixelPos.x < 1 ) ? 0.0 : wc.x;
+        wc.y = ( !IsInDenoisingRange( viewZ1 ) || pixelPos.x >= gRectSizeMinusOne.x ) ? 0.0 : wc.y;
         wc *= Math::PositiveRcp( wc.x + wc.y );
         checkerboardPos.xy >>= 1;
     #endif
