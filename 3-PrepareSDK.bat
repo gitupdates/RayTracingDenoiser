@@ -6,7 +6,7 @@ set SDK=_NRD_SDK
 
 echo %SDK%: ROOT=%ROOT%, SELF=%SELF%
 
-rd /q /s "%SDK%"
+if exist "%SDK%" rd /q /s "%SDK%"
 
 mkdir "%SDK%\Include"
 mkdir "%SDK%\Integration"
