@@ -854,14 +854,14 @@ float4 REBLUR_BackEnd_UnpackRadianceAndNormHitDist( float4 data )
 
 // OUT_DIFF_SH0 and OUT_DIFF_SH1 => X
 // OUT_SPEC_SH0 and OUT_SPEC_SH1 => X
-NRD_SG REBLUR_BackEnd_UnpackSh( float4 sh0, float4 sh1 )
+NRD_SG REBLUR_BackEnd_UnpackSh( float4 sh0, float3 sh1 )
 {
     NRD_SG sg;
     sg.c0 = sh0.x;
     sg.chroma = sh0.yz;
     sg.normHitDist = sh0.w;
-    sg.c1 = sh1.xyz;
-    sg.sharpness = sh1.w;
+    sg.c1 = sh1;
+    sg.sharpness = 0.0; // computed in resolve
 
     return sg;
 }
@@ -874,7 +874,7 @@ NRD_SG REBLUR_BackEnd_UnpackDirectionalOcclusion( float4 data )
     sg.chroma = float2( 0, 0 );
     sg.normHitDist = data.w;
     sg.c1 = data.xyz;
-    sg.sharpness = 0.0;
+    sg.sharpness = 0.0; // computed in resolve
 
     return sg;
 }
@@ -929,14 +929,14 @@ float4 RELAX_BackEnd_UnpackRadiance( float4 color )
 
 // OUT_DIFF_SH0 and OUT_DIFF_SH1 => X
 // OUT_SPEC_SH0 and OUT_SPEC_SH1 => X
-NRD_SG RELAX_BackEnd_UnpackSh( float4 sh0, float4 sh1 )
+NRD_SG RELAX_BackEnd_UnpackSh( float4 sh0, float3 sh1 )
 {
     NRD_SG sg;
     sg.c0 = sh0.x;
     sg.chroma = sh0.yz;
     sg.normHitDist = sh0.w;
-    sg.c1 = sh1.xyz;
-    sg.sharpness = sh1.w;
+    sg.c1 = sh1;
+    sg.sharpness = 0.0;
 
     return sg;
 }
