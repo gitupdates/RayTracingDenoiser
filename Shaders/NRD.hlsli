@@ -262,6 +262,8 @@ NOISY INPUTS:
 
     #define NRD_EXPORT
 
+    #pragma warning( disable: 3577 ) // value cannot be NaN, isnan() may not be necessary. /Gis may force isnan() to be performed
+
 #endif
 
 //=================================================================================================================================
@@ -559,16 +561,8 @@ float _REBLUR_GetHitDistanceNormalization( float viewZ, float3 hitDistParams, fl
     return ( hitDistParams.x + abs( viewZ ) * hitDistParams.y ) * lerp( hitDistParams.z, 1.0, smc );
 }
 
-// Is valid?
-bool _NRD_IsInvalid( float3 x )
-{
-    return any( isnan( x ) ) || any( isinf( x ) );
-}
-
-bool _NRD_IsInvalid( float x )
-{
-    return isnan( x ) || isinf( x );
-}
+// Is invalid?
+#define _NRD_IsInvalid( x ) ( any( isnan( x ) ) || any( isinf( x ) ) )
 
 //==============================================================================================================================================
 // SPHERICAL HARMONICS: https://media.contentapi.ea.com/content/dam/eacom/frostbite/files/gdc2018-precomputedgiobalilluminationinfrostbite.pdf

@@ -456,7 +456,7 @@ else
 
 * **IN\_VIEWZ** - view-space Z coordinate of primary hits (linearized g-buffer depth)
 
-  Positive and negative values are supported. Z values in all pixels must be in the same space, matching space defined by matrices passed to NRD. If, for example, the protagonist's hands are rendered using special matrices, Z values should be computed as:
+  Positive and negative values are supported. Can't be `INF` (to avoid potential `INF - INF = NAN`). Z values in all pixels must be in the same space, matching space defined by matrices passed to NRD. If, for example, the protagonist's hands are rendered using special matrices, Z values should be computed as:
   - reconstruct world position using special matrices for "hands"
   - project on screen using matrices passed to NRD
   - `.w` component is positive view Z (or just transform world-space position to main view space and take `.z` component)

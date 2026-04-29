@@ -202,8 +202,7 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
     float3 prevViewZ2 = UnpackViewZ( smbViewZ2.xyw );
     float3 prevViewZ3 = UnpackViewZ( smbViewZ3.xyz );
 
-    // Previous normal averaged for all pixels in 2x2 footprint
-    // IMPORTANT: bilinear filter can touch sky pixels, due to this reason "Post Blur" writes special values into sky-pixels
+    // Previous normal averaged for all "in-range" pixels in 2x2 footprint
     Filtering::Bilinear smbBilinearFilter = Filtering::GetBilinearFilter( smbPixelUv, gRectSizePrev );
     float3 smbNavg = 0; // TODO: the sum works well, but probably there is a potential to use just "1 smart sample" (see test 168)
     {
@@ -275,10 +274,10 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
     float3 smbPlaneDist1 = abs( prevViewZ1 - Xvprev.z );
     float3 smbPlaneDist2 = abs( prevViewZ2 - Xvprev.z );
     float3 smbPlaneDist3 = abs( prevViewZ3 - Xvprev.z );
-    float3 smbOcclusion0 = step( smbPlaneDist0, smbDisocclusionThreshold.x );
-    float3 smbOcclusion1 = step( smbPlaneDist1, smbDisocclusionThreshold.y );
-    float3 smbOcclusion2 = step( smbPlaneDist2, smbDisocclusionThreshold.z );
-    float3 smbOcclusion3 = step( smbPlaneDist3, smbDisocclusionThreshold.w );
+    float3 smbOcclusion0 = step( smbPlaneDist0, smbDisocclusionThreshold.x ) * IsInDenoisingRange( prevViewZ0 );
+    float3 smbOcclusion1 = step( smbPlaneDist1, smbDisocclusionThreshold.y ) * IsInDenoisingRange( prevViewZ1 );
+    float3 smbOcclusion2 = step( smbPlaneDist2, smbDisocclusionThreshold.z ) * IsInDenoisingRange( prevViewZ2 );
+    float3 smbOcclusion3 = step( smbPlaneDist3, smbDisocclusionThreshold.w ) * IsInDenoisingRange( prevViewZ3 );
 
     // Disocclusion: materialID
     #if( NRD_NORMAL_ENCODING == NRD_NORMAL_ENCODING_R10G10B10A2_UNORM )
@@ -546,7 +545,7 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
             float4 NoXprev = ( Nv.x * vmbVv.x + Nv.y * vmbVv.y ) * ( gOrthoMode == 0 ? vmbViewZ : gOrthoMode ) + Nv.z * vmbVv.z * vmbViewZ;
             float4 vmbPlaneDist = abs( NoXprev - NoXcurr );
 
-            vmbOcclusion *= step( vmbPlaneDist, vmbOcclusionThreshold );
+            vmbOcclusion *= step( vmbPlaneDist, vmbOcclusionThreshold ) * IsInDenoisingRange( vmbViewZ );
 
             // Prev data
             uint4 vmbInternalData = gPrev_InternalData.GatherRed( gNearestClamp, vmbBilinearGatherUv ).wzxy;
@@ -803,7 +802,7 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
 
             specResult = ChangeLuma( specResult, specLumaClamped );
             #if( NRD_MODE == SH )
-                specShResult.xyz *= GetLumaScale( length( specShResult.xyz ), specLumaClamped );
+                specShResult *= GetLumaScale( length( specShResult ), specLumaClamped );
             #endif
 
             // This is required for "hit distance weight" to work
@@ -818,8 +817,7 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
             gOut_SpecSh[ pixelPos ] = specShResult;
         #endif
 
-        // Fast history
-        {
+        { // Fast history
             float maxFastAccumulatedFrameNum = gMaxFastAccumulatedFrameNum;
             if( materialID == gStrandMaterialID )
                 maxFastAccumulatedFrameNum = max( maxFastAccumulatedFrameNum, gMaxAccumulatedFrameNum / 5 );
@@ -901,19 +899,20 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
         REBLUR_TYPE diffHistory;
         REBLUR_FAST_TYPE diffFastHistory;
         REBLUR_SH_TYPE diffShHistory;
+        {
+            BicubicFilterNoCornersWithFallbackToBilinearFilterWithCustomWeights(
+                saturate( smbPixelUv ) * gRectSizePrev, gResourceSizeInvPrev,
+                smbOcclusionWeights, smbAllowCatRom,
+                gHistory_Diff, diffHistory,
+                gHistory_DiffFast, diffFastHistory
+                #if( NRD_MODE == SH )
+                    , gHistory_DiffSh, diffShHistory
+                #endif
+            );
 
-        BicubicFilterNoCornersWithFallbackToBilinearFilterWithCustomWeights(
-            saturate( smbPixelUv ) * gRectSizePrev, gResourceSizeInvPrev,
-            smbOcclusionWeights, smbAllowCatRom,
-            gHistory_Diff, diffHistory,
-            gHistory_DiffFast, diffFastHistory
-            #if( NRD_MODE == SH )
-                , gHistory_DiffSh, diffShHistory
-            #endif
-        );
-
-        // Avoid negative values
-        diffHistory = ClampNegativeToZero( diffHistory );
+            // Avoid negative values
+            diffHistory = ClampNegativeToZero( diffHistory );
+        }
 
         // Accumulation
         float diffNonLinearAccumSpeed = 1.0 / ( 1.0 + diffAccumSpeed );
@@ -940,7 +939,7 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
 
             diffResult = ChangeLuma( diffResult, diffLumaClamped );
             #if( NRD_MODE == SH )
-                diffShResult.xyz *= GetLumaScale( length( diffShResult.xyz ), diffLumaClamped );
+                diffShResult *= GetLumaScale( length( diffShResult ), diffLumaClamped );
             #endif
 
             // This is required for "hit distance weight" to work
@@ -954,22 +953,23 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
             gOut_DiffSh[ pixelPos ] = diffShResult;
         #endif
 
-        // Fast history
-        float diffFastAccumSpeed = min( diffAccumSpeed, gMaxFastAccumulatedFrameNum );
-        float diffFastNonLinearAccumSpeed = 1.0 / ( 1.0 + diffFastAccumSpeed );
+        { // Fast history
+            float diffFastAccumSpeed = min( diffAccumSpeed, gMaxFastAccumulatedFrameNum );
+            float diffFastNonLinearAccumSpeed = 1.0 / ( 1.0 + diffFastAccumSpeed );
 
-        if( !diffHasData )
-            diffFastNonLinearAccumSpeed *= lerp( 1.0 - gCheckerboardResolveAccumSpeed, 1.0, diffFastNonLinearAccumSpeed );
+            if( !diffHasData )
+                diffFastNonLinearAccumSpeed *= lerp( 1.0 - gCheckerboardResolveAccumSpeed, 1.0, diffFastNonLinearAccumSpeed );
 
-        float diffFastResult = lerp( diffFastHistory, GetLuma( diff ), diffFastNonLinearAccumSpeed );
+            float diffFastResult = lerp( diffFastHistory, GetLuma( diff ), diffFastNonLinearAccumSpeed );
 
-        #if( NRD_MODE != OCCLUSION && NRD_MODE != DO )
-            // Firefly suppressor ( fixes heavy crawling under camera rotation, test 99 )
-            float diffFastClamped = min( diffFastResult, GetLuma( diffHistory ) * diffMaxRelativeIntensity * REBLUR_FIREFLY_SUPPRESSOR_FAST_RELATIVE_INTENSITY );
-            diffFastResult = lerp( diffFastResult, diffFastClamped, diffAntifireflyFactor );
-        #endif
+            #if( NRD_MODE != OCCLUSION && NRD_MODE != DO )
+                // Firefly suppressor ( fixes heavy crawling under camera rotation, test 99 )
+                float diffFastClamped = min( diffFastResult, GetLuma( diffHistory ) * diffMaxRelativeIntensity * REBLUR_FIREFLY_SUPPRESSOR_FAST_RELATIVE_INTENSITY );
+                diffFastResult = lerp( diffFastResult, diffFastClamped, diffAntifireflyFactor );
+            #endif
 
-        gOut_DiffFast[ pixelPos ] = diffFastResult;
+            gOut_DiffFast[ pixelPos ] = diffFastResult;
+        }
     #else
         float diffAccumSpeed = 0;
     #endif
