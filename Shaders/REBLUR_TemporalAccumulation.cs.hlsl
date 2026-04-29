@@ -771,7 +771,6 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
 
             // Avoid negative values
             specHistory = ClampNegativeToZero( specHistory );
-            specFastHistory = max( specFastHistory, 0.0 );
         }
 
         // Accumulation
@@ -786,8 +785,7 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
 
         #if( NRD_MODE == SH )
             REBLUR_SH_TYPE specSh = gIn_SpecSh[ specPos ];
-            REBLUR_SH_TYPE specShResult = lerp( specShHistory, specSh, specNonLinearAccumSpeed );
-            specShResult = _NRD_IsInvalid( specShResult ) ? 0 : specShResult;
+            REBLUR_SH_TYPE specShResult = _NRD_IsInvalid( specSh ) ? 0 : lerp( specShHistory, specSh, specNonLinearAccumSpeed );
         #endif
 
         // Firefly suppressor
@@ -914,7 +912,6 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
 
             // Avoid negative values
             diffHistory = ClampNegativeToZero( diffHistory );
-            diffFastHistory = max( diffFastHistory, 0.0 );
         }
 
         // Accumulation
@@ -926,8 +923,7 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
         REBLUR_TYPE diffResult = MixHistoryAndCurrent( diffHistory, diff, diffNonLinearAccumSpeed );
         #if( NRD_MODE == SH )
             REBLUR_SH_TYPE diffSh = gIn_DiffSh[ diffPos ];
-            REBLUR_SH_TYPE diffShResult = lerp( diffShHistory, diffSh, diffNonLinearAccumSpeed );
-            diffShResult = _NRD_IsInvalid( diffShResult ) ? 0 : diffShResult;
+            REBLUR_SH_TYPE diffShResult = _NRD_IsInvalid( diffSh ) ? 0 : lerp( diffShHistory, diffSh, diffNonLinearAccumSpeed );
         #endif
 
         // Firefly suppressor
