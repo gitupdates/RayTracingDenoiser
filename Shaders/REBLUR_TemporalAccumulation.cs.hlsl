@@ -207,7 +207,7 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
     float3 smbNavg = 0; // TODO: the sum works well, but probably there is a potential to use just "1 smart sample" (see test 168)
     {
         uint2 p = uint2( smbBilinearFilter.origin );
-        float sum = 0.0;
+        float sum = NRD_EPS; // avoid 0
 
         float w = float( IsInDenoisingRange( prevViewZ0.z ) );
         smbNavg = NRD_FrontEnd_UnpackNormalAndRoughness( gPrev_Normal_Roughness[ p ] ).xyz * w;
@@ -225,7 +225,7 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
         smbNavg += NRD_FrontEnd_UnpackNormalAndRoughness( gPrev_Normal_Roughness[ p + uint2( 1, 1 ) ] ).xyz * w;
         sum += w;
 
-        smbNavg /= sum == 0.0 ? 1.0 : sum;
+        smbNavg /= sum;
     }
     smbNavg = Geometry::RotateVector( gWorldPrevToWorld, smbNavg );
 
@@ -771,6 +771,7 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
 
             // Avoid negative values
             specHistory = ClampNegativeToZero( specHistory );
+            specFastHistory = max( specFastHistory, 0.0 );
         }
 
         // Accumulation
@@ -786,6 +787,7 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
         #if( NRD_MODE == SH )
             REBLUR_SH_TYPE specSh = gIn_SpecSh[ specPos ];
             REBLUR_SH_TYPE specShResult = lerp( specShHistory, specSh, specNonLinearAccumSpeed );
+            specShResult = _NRD_IsInvalid( specShResult ) ? 0 : specShResult;
         #endif
 
         // Firefly suppressor
@@ -912,6 +914,7 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
 
             // Avoid negative values
             diffHistory = ClampNegativeToZero( diffHistory );
+            diffFastHistory = max( diffFastHistory, 0.0 );
         }
 
         // Accumulation
@@ -924,6 +927,7 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
         #if( NRD_MODE == SH )
             REBLUR_SH_TYPE diffSh = gIn_DiffSh[ diffPos ];
             REBLUR_SH_TYPE diffShResult = lerp( diffShHistory, diffSh, diffNonLinearAccumSpeed );
+            diffShResult = _NRD_IsInvalid( diffShResult ) ? 0 : diffShResult;
         #endif
 
         // Firefly suppressor
