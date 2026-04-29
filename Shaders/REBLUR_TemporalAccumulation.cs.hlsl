@@ -712,7 +712,7 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
             float smc = GetSpecMagicCurve( roughnessModified );
 
             float2 f;
-            f.x = dot( N, normalize( smbNavg ) );
+            f.x = dot( N, _NRD_SafeNormalize( smbNavg ) );
             f.y = dot( N, vmbN );
             f = lerp( smc, 1.0, responsiveFactor ) * Math::Pow01( f, lerp( 32.0, 1.0, smc ) * ( 1.0 - responsiveFactor ) );
 
