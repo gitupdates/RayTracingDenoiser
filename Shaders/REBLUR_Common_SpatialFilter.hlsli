@@ -194,16 +194,11 @@ license agreement from NVIDIA CORPORATION is strictly prohibited.
         #endif
 
             // Apply "mirror" to not waste taps going outside of the screen
-            float2 uv01 = saturate( uv );
-            float w = GetGaussianWeight( offset.z );
-            if( any( uv != uv01 ) ) // TODO: this branch saves a bit of perf
-            {
-                uv = MirrorUv( uv );
-                w = 1.0; // offset.z is not valid after mirroring
-            }
+            float2 mirrorUv = MirrorUv( uv );
+            float w = any( uv != mirrorUv ) ? 1.0 : GetGaussianWeight( offset.z );
 
             // "uv" to "pos"
-            int2 pos = min( uv, 0.999999 ) * gRectSize; // avoid "uv == 1"
+            int2 pos = min( mirrorUv, 0.99999 ) * gRectSize; // avoid "uv == 1"
 
             // Move to a "valid" pixel in checkerboard mode
             int checkerboardX = pos.x;
