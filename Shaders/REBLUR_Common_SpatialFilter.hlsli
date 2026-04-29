@@ -274,6 +274,7 @@ license agreement from NVIDIA CORPORATION is strictly prohibited.
             #if( NRD_MODE == SH )
                 REBLUR_SH_TYPE sh = INPUT_SH[ int2( checkerboardX, pos.y ) ];
                 sh = Denanify( w, sh );
+
                 resultSh += sh * w;
             #endif
         }

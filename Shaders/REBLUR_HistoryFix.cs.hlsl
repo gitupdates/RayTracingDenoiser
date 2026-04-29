@@ -187,6 +187,7 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
                     #if( NRD_MODE == SH )
                         REBLUR_SH_TYPE sh = gIn_DiffSh[ pos ];
                         sh = Denanify( w, sh );
+
                         diffSh += sh * w;
                     #endif
                 }
@@ -399,6 +400,7 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
                     #if( NRD_MODE == SH )
                         REBLUR_SH_TYPE sh = gIn_SpecSh[ pos ];
                         sh = Denanify( w, sh );
+
                         specSh += sh * w;
                     #endif
                 }
