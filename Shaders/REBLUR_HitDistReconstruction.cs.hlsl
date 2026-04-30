@@ -47,7 +47,7 @@ void Preload( uint2 sharedPos, int2 globalPos )
         #endif
     #endif
 
-    s_HitDist_ViewZ[ sharedPos.y ][ sharedPos.x ] = float3( hitDist, viewZ );
+    s_HitDist_ViewZ[ sharedPos.y ][ sharedPos.x ] = float3( !IsInDenoisingRange( viewZ ) ? 0.0 : hitDist, viewZ );
 }
 
 [numthreads( GROUP_X, GROUP_Y, 1 )]
@@ -113,7 +113,6 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
             float NoX = dot( Nv, Xvs );
 
             w *= ComputeWeight( NoX, geometryWeightParams.x, geometryWeightParams.y );
-            w = IsInDenoisingRange( data.z ) ? w : 0.0; // |NoX| can be ~0 if "data.z" is out of range
 
             float2 ww = w;
             #if( REBLUR_PERFORMANCE_MODE == 0 )
@@ -128,11 +127,9 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
                 ww.y *= ComputeExponentialWeight( normalAndRoughness.w * normalAndRoughness.w, relaxedRoughnessWeightParams.x, relaxedRoughnessWeightParams.y );
             #endif
 
-            data.x = Denanify( ww.x, data.x );
-            data.y = Denanify( ww.y, data.y );
-
             // Ignore "no data"
-            ww *= float2( data.xy != 0.0 );
+            ww.x = data.x == 0.0 ? 0.0 : ww.x;
+            ww.y = data.y == 0.0 ? 0.0 : ww.y;
 
             // Accumulate
             center.xy += data.xy * ww;

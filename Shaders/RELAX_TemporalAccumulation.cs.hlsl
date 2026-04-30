@@ -713,7 +713,7 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
             float2 geometryWeightParams = GetGeometryWeightParams( NRD_CURVATURE_HIGH_PARALLAX_DISOCCLUSION_THRESHOLD, frustumSize, currentWorldPos, currentNormal );
             float NoX = dot( currentNormal, xHigh );
 
-            float w = ComputeWeight( NoX, geometryWeightParams.x, geometryWeightParams.y );
+            float w = ApplyGeometryWeightLast( 1.0, zHigh, NoX, geometryWeightParams );
             bool cmp = w > 0.5;
 
             n = cmp ? nHigh : n;

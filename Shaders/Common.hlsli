@@ -295,7 +295,9 @@ float IsInScreenNearest( float2 uv )
 float2 MirrorUv( float2 uv )
 {
     // https://www.desmos.com/calculator/vreqlhocsm
-    return 1.0 - abs( 1.0 - frac( uv * 0.5 ) * 2.0 );
+    float2 mirrorUv = 1.0 - abs( 1.0 - frac( uv * 0.5 ) * 2.0 );
+
+    return min( mirrorUv, 0.99999 ); // avoid "uv == 1", because "1 * gRectSize" is outside of the render area
 }
 
 // x y
@@ -544,6 +546,13 @@ float2 GetRelaxedRoughnessWeightParams( float m, float fraction = 1.0, float sen
 #else
     #define ComputeWeight( x, px, py )     ComputeNonExponentialWeight( x, px, py )
 #endif
+
+float ApplyGeometryWeightLast( float w, float z, float NoX, float2 geometryWeightParams )
+{
+    w *= ComputeWeight( NoX, geometryWeightParams.x, geometryWeightParams.y );
+
+    return !IsInDenoisingRange( z ) ? 0.0 : w; // |NoX| can be ~0 if "zs" is out of range
+}
 
 float GetGaussianWeight( float r )
 {

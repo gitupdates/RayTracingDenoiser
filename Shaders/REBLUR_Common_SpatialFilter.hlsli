@@ -198,7 +198,7 @@ license agreement from NVIDIA CORPORATION is strictly prohibited.
             float w = any( uv != mirrorUv ) ? 1.0 : GetGaussianWeight( offset.z );
 
             // "uv" to "pos"
-            int2 pos = min( mirrorUv, 0.99999 ) * gRectSize; // avoid "uv == 1"
+            int2 pos = mirrorUv * gRectSize;
 
             // Move to a "valid" pixel in checkerboard mode
             int checkerboardX = pos.x;
@@ -228,13 +228,12 @@ license agreement from NVIDIA CORPORATION is strictly prohibited.
             float angle = Math::AcosApprox( dot( N, Ns.xyz ) );
             float NoX = dot( Nv, Xvs );
 
-            w *= ComputeWeight( NoX, geometryWeightParams.x, geometryWeightParams.y );
             w *= CompareMaterials( materialID, materialIDs, MIN_MATERIAL );
             w *= ComputeWeight( angle, normalWeightParam, 0.0 );
         #if( REBLUR_SPATIAL_LOBE == REBLUR_SPEC )
             w *= ComputeWeight( Ns.w, roughnessWeightParams.x, roughnessWeightParams.y );
         #endif
-            w = IsInDenoisingRange( zs ) ? w : 0.0; // |NoX| can be ~0 if "zs" is out of range
+            w = ApplyGeometryWeightLast( w, zs, NoX, geometryWeightParams );
 
             REBLUR_TYPE s = INPUT[ int2( checkerboardX, pos.y ) ];
             s = Denanify( w, s );

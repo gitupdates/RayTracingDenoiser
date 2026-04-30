@@ -90,7 +90,7 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
             // Apply "mirror" to not waste taps going outside of the screen
             float2 uv = float2( samplePosInt + 0.5 ) * gRectSizeInv;
             uv = MirrorUv( uv );
-            samplePosInt = uv * gRectSize; // "uv" can't be "1"
+            samplePosInt = uv * gRectSize;
 
             float sampleMaterialID;
             float3 sampleNormal = NRD_FrontEnd_UnpackNormalAndRoughness(gIn_Normal_Roughness[samplePosInt], sampleMaterialID).rgb;

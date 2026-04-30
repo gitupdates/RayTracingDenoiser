@@ -150,7 +150,7 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
                     uv = MirrorUv( uv );
 
                     // "uv" to "pos"
-                    int2 pos = uv * gRectSize; // "uv" can't be "1"
+                    int2 pos = uv * gRectSize;
 
                     // Fetch data
                     float zs = UnpackViewZ( gIn_ViewZ[ WithRectOrigin( pos ) ] );
@@ -164,15 +164,15 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
                     float angle = Math::AcosApprox( dot( Ns.xyz, N ) );
                     float NoX = dot( Nv, Xvs );
 
-                    float w = ComputeWeight( NoX, geometryWeightParams.x, geometryWeightParams.y );
-                    w *= CompareMaterials( materialID, materialIDs, gDiffMinMaterial );
+                    float w = CompareMaterials( materialID, materialIDs, gDiffMinMaterial );
                     w *= ComputeExponentialWeight( angle, normalWeightParam, 0.0 );
-                    w = IsInDenoisingRange( zs ) ? w : 0.0; // |NoX| can be ~0 if "zs" is out of range
                     // gaussian weight is not needed
 
                     #if( REBLUR_PERFORMANCE_MODE == 0 )
                         w *= 1.0 + UnpackData1( gIn_Data1[ pos ] ).x;
                     #endif
+
+                    w = ApplyGeometryWeightLast( w, zs, NoX, geometryWeightParams );
 
                     REBLUR_TYPE s = gIn_Diff[ pos ];
                     s = Denanify( w, s );
@@ -362,7 +362,7 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
                     uv = MirrorUv( uv );
 
                     // "uv" to "pos"
-                    int2 pos = uv * gRectSize; // "uv" can't be "1"
+                    int2 pos = uv * gRectSize;
 
                     // Fetch data
                     float zs = UnpackViewZ( gIn_ViewZ[ WithRectOrigin( pos ) ] );
@@ -376,16 +376,16 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
                     float angle = Math::AcosApprox( dot( Ns.xyz, N ) );
                     float NoX = dot( Nv, Xvs );
 
-                    float w = ComputeWeight( NoX, geometryWeightParams.x, geometryWeightParams.y );
-                    w *= CompareMaterials( materialID, materialIDs, gSpecMinMaterial );
+                    float w = CompareMaterials( materialID, materialIDs, gSpecMinMaterial );
                     w *= ComputeExponentialWeight( angle, normalWeightParam, 0.0 );
                     w *= ComputeExponentialWeight( Ns.w * Ns.w, relaxedRoughnessWeightParams.x, relaxedRoughnessWeightParams.y );
-                    w = IsInDenoisingRange( zs ) ? w : 0.0; // |NoX| can be ~0 if "zs" is out of range
                     // gaussian weight is not needed
 
                     #if( REBLUR_PERFORMANCE_MODE == 0 )
                         w *= 1.0 + UnpackData1( gIn_Data1[ pos ] ).y;
                     #endif
+
+                    w = ApplyGeometryWeightLast( w, zs, NoX, geometryWeightParams );
 
                     REBLUR_TYPE s = gIn_Spec[ pos ];
                     s = Denanify( w, s );
