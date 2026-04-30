@@ -47,6 +47,9 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
     float isSky = gIn_Tiles[ pixelPos >> 4 ].x;
     PRELOAD_INTO_SMEM_WITH_TILE_CHECK;
 
+    float diffAntilag = 1.0;
+    float specAntilag = 1.0;
+
     // Tile-based early out
     if( isSky != 0.0 || any( pixelPos > gRectSizeMinusOne ) )
         return;
@@ -54,7 +57,7 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
     // Early out
     float viewZ = UnpackViewZ( gIn_ViewZ[ WithRectOrigin( pixelPos ) ] );
     if( !IsInDenoisingRange( viewZ ) )
-        return; // IMPORTANT: no data output, must be rejected by the "viewZ" check!
+        return;
 
     // Position
     float2 pixelUv = float2( pixelPos + 0.5 ) * gRectSizeInv;
@@ -154,7 +157,17 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
         diffLumaHistory = max( diffLumaHistory, 0.0 );
 
         // Compute antilag
-        float diffAntilag = ComputeAntilag( diffLumaHistory, diffLumaM1, diffLumaSigma, smbFootprintQuality * data1.x );
+        diffAntilag = ComputeAntilag( diffLumaHistory, diffLumaM1, diffLumaSigma, smbFootprintQuality * data1.x );
+        #ifdef NRD_COMPILER_DXC
+        {
+            // Adapt to neighbors if they are more stable
+            float d10 = QuadReadAcrossX( diffAntilag ); // the variable must be available in all threads of the quad, i.e. before early out!
+            float d01 = QuadReadAcrossY( diffAntilag );
+
+            float avg = ( d10 + d01 + diffAntilag ) / 3.0;
+            diffAntilag = max( diffAntilag, avg );
+        }
+        #endif
 
         float diffMinAccumSpeed = min( data1.x, gHistoryFixFrameNum ) * REBLUR_USE_ANTILAG_NOT_INVOKING_HISTORY_FIX;
         data1.x = lerp( diffMinAccumSpeed, data1.x, diffAntilag );
@@ -268,7 +281,18 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
 
         // Compute antilag
         float footprintQuality = lerp( smbFootprintQuality, vmbFootprintQuality, virtualHistoryAmount );
-        float specAntilag = ComputeAntilag( specLumaHistory, specLumaM1, specLumaSigma, footprintQuality * data1.y );
+
+        specAntilag = ComputeAntilag( specLumaHistory, specLumaM1, specLumaSigma, footprintQuality * data1.y );
+        #ifdef NRD_COMPILER_DXC
+        {
+            // Adapt to neighbors if they are more stable
+            float d10 = QuadReadAcrossX( specAntilag ); // the variable must be available in all threads of the quad, i.e. before early out!
+            float d01 = QuadReadAcrossY( specAntilag );
+
+            float avg = ( d10 + d01 + specAntilag ) / 3.0;
+            specAntilag = max( specAntilag, avg );
+        }
+        #endif
 
         float specMinAccumSpeed = min( data1.y, gHistoryFixFrameNum ) * REBLUR_USE_ANTILAG_NOT_INVOKING_HISTORY_FIX;
         data1.y = lerp( specMinAccumSpeed, data1.y, specAntilag );

@@ -30,6 +30,8 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
         gOut_ViewZ[ pixelPos ] = viewZpacked;
     #endif
 
+    float2 nonLinearAccumSpeed = 0.0; // for quad intrinsics ( less blur on edges )
+
     // Tile-based early out and viewZ-based early out
     float isSky = gIn_Tiles[ pixelPos >> 4 ].x;
     float viewZ = UnpackViewZ( viewZpacked );
@@ -55,17 +57,17 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
     const float4 rotator = GetBlurKernelRotation( REBLUR_BLUR_ROTATOR_MODE, pixelPos, gRotator, gFrameIndex );
 
     // Non-linear accum speed
-    float2 nonLinearAccumSpeed;
     nonLinearAccumSpeed.x = GetAdvancedNonLinearAccumSpeed( data1.x );
     nonLinearAccumSpeed.y = GetAdvancedNonLinearAccumSpeed( data1.y );
-
     #ifdef NRD_COMPILER_DXC
+    {
         // Adapt to neighbors if they are more stable
-        REBLUR_DATA1_TYPE d10 = QuadReadAcrossX( nonLinearAccumSpeed );
+        REBLUR_DATA1_TYPE d10 = QuadReadAcrossX( nonLinearAccumSpeed ); // the variable must be available in all threads of the quad, i.e. before early out!
         REBLUR_DATA1_TYPE d01 = QuadReadAcrossY( nonLinearAccumSpeed );
 
         REBLUR_DATA1_TYPE avg = ( d10 + d01 + nonLinearAccumSpeed ) / 3.0;
         nonLinearAccumSpeed = min( nonLinearAccumSpeed, avg );
+    }
     #endif
 
     // Spatial filtering

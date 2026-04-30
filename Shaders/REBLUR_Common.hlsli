@@ -267,15 +267,6 @@ float ComputeAntilag( float h, float a, float sigma, float accumSpeed )
         d = 1.0 / ( 1.0 + d * accumSpeed / magic );
     #endif
 
-    #ifdef NRD_COMPILER_DXC
-        // Adapt to neighbors if they are more stable
-        float d10 = QuadReadAcrossX( d );
-        float d01 = QuadReadAcrossY( d );
-
-        float avg = ( d10 + d01 + d ) / 3.0;
-        d = max( d, avg );
-    #endif
-
     return REBLUR_SHOW == 0 ? d : 1.0;
 }
 

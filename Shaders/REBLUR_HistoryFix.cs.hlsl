@@ -50,6 +50,8 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
     float isSky = gIn_Tiles[ pixelPos >> 4 ].x;
     PRELOAD_INTO_SMEM_WITH_TILE_CHECK;
 
+    float2 stride = 0; // for quad intrinsics ( less blur on edges )
+
     // Tile-based early out
     if( isSky != 0.0 || any( pixelPos > gRectSizeMinusOne ) )
         return;
@@ -78,7 +80,7 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
     float invHistoryFixFrameNum = 1.0 / max( gHistoryFixFrameNum, NRD_EPS );
     float2 frameNumAvgNorm = saturate( frameNum * invHistoryFixFrameNum );
 
-    float2 stride = materialID == gHistoryFixAlternatePixelStrideMaterialID ? gHistoryFixAlternatePixelStride : gHistoryFixBasePixelStride;
+    stride = materialID == gHistoryFixAlternatePixelStrideMaterialID ? gHistoryFixAlternatePixelStride : gHistoryFixBasePixelStride;
     stride /= 1.0 + 1.0; // to match RELAX, where "frameNum" after "TemporalAccumulation" is "1", not "0"
     stride *= 2.0 / REBLUR_HISTORY_FIX_FILTER_RADIUS; // preserve blur radius in pixels ( default blur radius is 2 taps )
     stride *= float2( frameNum < gHistoryFixFrameNum );
@@ -99,20 +101,21 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
         hitDist = ExtractHitDist( diff );
 
         // Stride between taps
-        float diffStride = stride.x;
-        diffStride *= lerp( 0.25 + 0.75 * Math::Sqrt01( hitDistFactor ), 1.0, diffNonLinearAccumSpeed ); // "hitDistFactor" is very noisy and breaks nice patterns
+        stride.x *= lerp( 0.25 + 0.75 * Math::Sqrt01( hitDistFactor ), 1.0, diffNonLinearAccumSpeed ); // "hitDistFactor" is very noisy and breaks nice patterns
         #ifdef NRD_COMPILER_DXC
+        {
             // Adapt to neighbors if they are more stable
-            float d10 = QuadReadAcrossX( diffStride );
-            float d01 = QuadReadAcrossY( diffStride );
+            float d10 = QuadReadAcrossX( stride.x ); // the variable must be available in all threads of the quad, i.e. before early out!
+            float d01 = QuadReadAcrossY( stride.x );
 
-            float avg = ( d10 + d01 + diffStride ) / 3.0;
-            diffStride = min( diffStride, avg );
+            float avg = ( d10 + d01 + stride.x ) / 3.0;
+            stride.x = min( stride.x, avg );
+        }
         #endif
-        diffStride = round( diffStride );
+        stride.x = round( stride.x );
 
         // History reconstruction
-        if( diffStride != 0.0 )
+        if( stride.x != 0.0 )
         {
             // Parameters
             float normalWeightParam = GetNormalWeightParam( diffNonLinearAccumSpeed, gLobeAngleFraction );
@@ -144,7 +147,7 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
                         continue;
 
                     // Sample uv ( at the pixel center )
-                    float2 uv = pixelUv + float2( i, j ) * diffStride * gRectSizeInv;
+                    float2 uv = pixelUv + float2( i, j ) * stride.x * gRectSizeInv;
 
                     // Apply "mirror" to not waste taps going outside of the screen
                     uv = MirrorUv( uv );
@@ -309,21 +312,22 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
         hitDist = saturate( hitDist / hitDistScale );
 
         // Stride between taps
-        float specStride = stride.y;
-        specStride *= lerp( 0.25 + 0.75 * Math::Sqrt01( hitDistFactor ), 1.0, specNonLinearAccumSpeed ); // "hitDistFactor" is very noisy and breaks nice patterns
-        specStride *= lerp( 0.25, 1.0, smc ); // hand tuned // TODO: use "lobeRadius"?
+        stride.y *= lerp( 0.25 + 0.75 * Math::Sqrt01( hitDistFactor ), 1.0, specNonLinearAccumSpeed ); // "hitDistFactor" is very noisy and breaks nice patterns
+        stride.y *= lerp( 0.25, 1.0, smc ); // hand tuned // TODO: use "lobeRadius"?
         #ifdef NRD_COMPILER_DXC
+        {
             // Adapt to neighbors if they are more stable
-            float d10 = QuadReadAcrossX( specStride );
-            float d01 = QuadReadAcrossY( specStride );
+            float d10 = QuadReadAcrossX( stride.y ); // the variable must be available in all threads of the quad, i.e. before early out!
+            float d01 = QuadReadAcrossY( stride.y );
 
-            float avg = ( d10 + d01 + specStride ) / 3.0;
-            specStride = min( specStride, avg );
+            float avg = ( d10 + d01 + stride.y ) / 3.0;
+            stride.y = min( stride.y, avg );
+        }
         #endif
-        specStride = round( specStride );
+        stride.y = round( stride.y );
 
         // History reconstruction
-        if( specStride != 0 )
+        if( stride.y != 0 )
         {
             // Parameters
             float normalWeightParam = GetNormalWeightParam( specNonLinearAccumSpeed, gLobeAngleFraction, roughness );
@@ -356,7 +360,7 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
                         continue;
 
                     // Sample uv ( at the pixel center )
-                    float2 uv = pixelUv + float2( i, j ) * specStride * gRectSizeInv;
+                    float2 uv = pixelUv + float2( i, j ) * stride.y * gRectSizeInv;
 
                     // Apply "mirror" to not waste taps going outside of the screen
                     uv = MirrorUv( uv );

@@ -787,7 +787,6 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
         #if( NRD_MODE == SH )
             REBLUR_SH_TYPE specSh = gIn_SpecSh[ specPos ];
             REBLUR_SH_TYPE specShResult = lerp( specShHistory, specSh, specNonLinearAccumSpeed );
-            specShResult = _NRD_IsInvalid( specShResult ) ? 0 : specShResult;
         #endif
 
         // Firefly suppressor
@@ -927,7 +926,6 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
         #if( NRD_MODE == SH )
             REBLUR_SH_TYPE diffSh = gIn_DiffSh[ diffPos ];
             REBLUR_SH_TYPE diffShResult = lerp( diffShHistory, diffSh, diffNonLinearAccumSpeed );
-            diffShResult = _NRD_IsInvalid( diffShResult ) ? 0 : diffShResult;
         #endif
 
         // Firefly suppressor
