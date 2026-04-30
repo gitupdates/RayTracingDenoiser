@@ -55,7 +55,11 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
         return;
 
     // Blur stride
-    float2 frameNum = UnpackData1( gIn_Data1[ pixelPos ] );
+    REBLUR_DATA1_TYPE frameNum = UnpackData1( gIn_Data1[ pixelPos ] );
+
+    float viewZ = UnpackViewZ( gIn_ViewZ[ WithRectOrigin( pixelPos ) ] );
+    frameNum = !IsInDenoisingRange( viewZ ) ? REBLUR_MAX_ACCUM_FRAME_NUM : frameNum; // less blur on "SKY" edges
+
     float2 stride = float2( frameNum < gHistoryFixFrameNum );
     #ifdef NRD_COMPILER_DXC
     {
@@ -70,7 +74,6 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
     #endif
 
     // Early out ( thread )
-    float viewZ = UnpackViewZ( gIn_ViewZ[ WithRectOrigin( pixelPos ) ] );
     if( !IsInDenoisingRange( viewZ ) || any( pixelPos > gRectSizeMinusOne ) )
         return;
 

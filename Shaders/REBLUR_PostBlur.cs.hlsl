@@ -35,6 +35,9 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
     nonLinearAccumSpeed.x = GetAdvancedNonLinearAccumSpeed( data1.x );
     nonLinearAccumSpeed.y = GetAdvancedNonLinearAccumSpeed( data1.y );
 
+    float viewZ = UnpackViewZ( gIn_ViewZ[ pixelPos ] );
+    nonLinearAccumSpeed = !IsInDenoisingRange( viewZ ) ? 0.0 : nonLinearAccumSpeed; // less blur on "SKY" edges
+
     #ifdef NRD_COMPILER_DXC
     {
         // IMPORTANT: the spec says: "these routines assume that flow control execution is uniform at least across the quad"
@@ -48,7 +51,6 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
     #endif
 
     // Early out ( thread )
-    float viewZ = UnpackViewZ( gIn_ViewZ[ pixelPos ] );
     if( !IsInDenoisingRange( viewZ ) || any( pixelPos > gRectSizeMinusOne ) )
         return;
 

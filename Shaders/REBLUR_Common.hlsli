@@ -53,7 +53,7 @@ float2 PackData1( float diffAccumSpeed, float specAccumSpeed )
     return r;
 }
 
-float2 UnpackData1( float2 p )
+REBLUR_DATA1_TYPE UnpackData1( float2 p )
 {
     // Allow R8_UNORM for specular only denoiser
     #if( NRD_DIFF == 0 )
