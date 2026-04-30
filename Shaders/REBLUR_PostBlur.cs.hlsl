@@ -23,16 +23,33 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
 {
     NRD_CTA_ORDER_REVERSED;
 
-    float2 nonLinearAccumSpeed = 0.0; // for quad intrinsics ( less blur on edges )
-
-    // Tile-based early out
+    // Tile-based early out ( quad uniform )
     float isSky = gIn_Tiles[ pixelPos >> 4 ].x;
-    if( isSky != 0.0 || any( pixelPos > gRectSizeMinusOne ) )
+    if( isSky != 0.0 )
         return;
 
-    // Early out
+    // Non-linear accum speed
+    REBLUR_DATA1_TYPE data1 = UnpackData1( gIn_Data1[ pixelPos ] );
+
+    REBLUR_DATA1_TYPE nonLinearAccumSpeed;
+    nonLinearAccumSpeed.x = GetAdvancedNonLinearAccumSpeed( data1.x );
+    nonLinearAccumSpeed.y = GetAdvancedNonLinearAccumSpeed( data1.y );
+
+    #ifdef NRD_COMPILER_DXC
+    {
+        // IMPORTANT: the spec says: "these routines assume that flow control execution is uniform at least across the quad"
+        // Adapt to neighbors if they are more stable
+        REBLUR_DATA1_TYPE d10 = QuadReadAcrossX( nonLinearAccumSpeed );
+        REBLUR_DATA1_TYPE d01 = QuadReadAcrossY( nonLinearAccumSpeed );
+
+        REBLUR_DATA1_TYPE avg = ( d10 + d01 + nonLinearAccumSpeed ) / 3.0;
+        nonLinearAccumSpeed = min( nonLinearAccumSpeed, avg );
+    }
+    #endif
+
+    // Early out ( thread )
     float viewZ = UnpackViewZ( gIn_ViewZ[ pixelPos ] );
-    if( !IsInDenoisingRange( viewZ ) )
+    if( !IsInDenoisingRange( viewZ ) || any( pixelPos > gRectSizeMinusOne ) )
         return;
 
     // Center data
@@ -52,8 +69,6 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
     const float frustumSize = GetFrustumSize( gMinRectDimMulUnproject, gOrthoMode, viewZ );
     const float4 rotator = GetBlurKernelRotation( REBLUR_POST_BLUR_ROTATOR_MODE, pixelPos, gRotatorPost, gFrameIndex );
 
-    REBLUR_DATA1_TYPE data1 = UnpackData1( gIn_Data1[ pixelPos ] );
-
     // Output
     #if( REBLUR_COPY_GBUFFER == 1 )
         gOut_Normal_Roughness[ pixelPos ] = normalAndRoughnessPacked;
@@ -61,20 +76,6 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
 
     #if( TEMPORAL_STABILIZATION == 0 )
         gOut_InternalData[ pixelPos ] = PackInternalData( data1.x, data1.y, materialID );
-    #endif
-
-    // Non-linear accum speed
-    nonLinearAccumSpeed.x = GetAdvancedNonLinearAccumSpeed( data1.x );
-    nonLinearAccumSpeed.y = GetAdvancedNonLinearAccumSpeed( data1.y );
-    #ifdef NRD_COMPILER_DXC
-    {
-        // Adapt to neighbors if they are more stable
-        REBLUR_DATA1_TYPE d10 = QuadReadAcrossX( nonLinearAccumSpeed ); // the variable must be available in all threads of the quad, i.e. before early out!
-        REBLUR_DATA1_TYPE d01 = QuadReadAcrossY( nonLinearAccumSpeed );
-
-        REBLUR_DATA1_TYPE avg = ( d10 + d01 + nonLinearAccumSpeed ) / 3.0;
-        nonLinearAccumSpeed = min( nonLinearAccumSpeed, avg );
-    }
     #endif
 
     // Spatial filtering

@@ -50,15 +50,28 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
     float isSky = gIn_Tiles[ pixelPos >> 4 ].x;
     PRELOAD_INTO_SMEM_WITH_TILE_CHECK;
 
-    float2 stride = 0; // for quad intrinsics ( less blur on edges )
-
-    // Tile-based early out
-    if( isSky != 0.0 || any( pixelPos > gRectSizeMinusOne ) )
+    // Tile-based early out ( quad uniform )
+    if( isSky != 0.0 )
         return;
 
-    // Early out
+    // Blur stride
+    float2 frameNum = UnpackData1( gIn_Data1[ pixelPos ] );
+    float2 stride = float2( frameNum < gHistoryFixFrameNum );
+    #ifdef NRD_COMPILER_DXC
+    {
+        // IMPORTANT: the spec says: "these routines assume that flow control execution is uniform at least across the quad"
+        // Adapt to neighbors if they are more stable
+        float2 d10 = QuadReadAcrossX( stride );
+        float2 d01 = QuadReadAcrossY( stride );
+
+        float2 avg = ( d10 + d01 + stride ) / 3.0;
+        stride = min( stride, avg );
+    }
+    #endif
+
+    // Early out ( thread )
     float viewZ = UnpackViewZ( gIn_ViewZ[ WithRectOrigin( pixelPos ) ] );
-    if( !IsInDenoisingRange( viewZ ) )
+    if( !IsInDenoisingRange( viewZ ) || any( pixelPos > gRectSizeMinusOne ) )
         return;
 
     // Center data
@@ -76,14 +89,12 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
 
     int2 smemPos = threadPos + NRD_BORDER;
 
-    float2 frameNum = UnpackData1( gIn_Data1[ pixelPos ] );
     float invHistoryFixFrameNum = 1.0 / max( gHistoryFixFrameNum, NRD_EPS );
     float2 frameNumAvgNorm = saturate( frameNum * invHistoryFixFrameNum );
 
-    stride = materialID == gHistoryFixAlternatePixelStrideMaterialID ? gHistoryFixAlternatePixelStride : gHistoryFixBasePixelStride;
     stride /= 1.0 + 1.0; // to match RELAX, where "frameNum" after "TemporalAccumulation" is "1", not "0"
     stride *= 2.0 / REBLUR_HISTORY_FIX_FILTER_RADIUS; // preserve blur radius in pixels ( default blur radius is 2 taps )
-    stride *= float2( frameNum < gHistoryFixFrameNum );
+    stride *= materialID == gHistoryFixAlternatePixelStrideMaterialID ? gHistoryFixAlternatePixelStride : gHistoryFixBasePixelStride;
 
     // Diffuse
     #if( NRD_DIFF )
@@ -102,16 +113,6 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
 
         // Stride between taps
         stride.x *= lerp( 0.25 + 0.75 * Math::Sqrt01( hitDistFactor ), 1.0, diffNonLinearAccumSpeed ); // "hitDistFactor" is very noisy and breaks nice patterns
-        #ifdef NRD_COMPILER_DXC
-        {
-            // Adapt to neighbors if they are more stable
-            float d10 = QuadReadAcrossX( stride.x ); // the variable must be available in all threads of the quad, i.e. before early out!
-            float d01 = QuadReadAcrossY( stride.x );
-
-            float avg = ( d10 + d01 + stride.x ) / 3.0;
-            stride.x = min( stride.x, avg );
-        }
-        #endif
         stride.x = round( stride.x );
 
         // History reconstruction
@@ -314,16 +315,6 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
         // Stride between taps
         stride.y *= lerp( 0.25 + 0.75 * Math::Sqrt01( hitDistFactor ), 1.0, specNonLinearAccumSpeed ); // "hitDistFactor" is very noisy and breaks nice patterns
         stride.y *= lerp( 0.25, 1.0, smc ); // hand tuned // TODO: use "lobeRadius"?
-        #ifdef NRD_COMPILER_DXC
-        {
-            // Adapt to neighbors if they are more stable
-            float d10 = QuadReadAcrossX( stride.y ); // the variable must be available in all threads of the quad, i.e. before early out!
-            float d01 = QuadReadAcrossY( stride.y );
-
-            float avg = ( d10 + d01 + stride.y ) / 3.0;
-            stride.y = min( stride.y, avg );
-        }
-        #endif
         stride.y = round( stride.y );
 
         // History reconstruction
