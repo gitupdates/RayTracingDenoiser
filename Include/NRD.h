@@ -10,16 +10,25 @@ license agreement from NVIDIA CORPORATION is strictly prohibited.
 
 /*
 CREDITS:
-    Developed by:
-        Dmitrii Zhdan (dzhdan@nvidia.com)
-        Tim Cheblokov (ttcheblokov@nvidia.com)
 
-    Special thanks:
-        Pawel Kozlowski (NVIDIA)
-        Evgeny Makarov (NVIDIA)
-        Ivan Fedorov (NVIDIA)
-        Ivan Povarov (NVIDIA)
-        Oles Shyshkovtsov (4A GAMES) for initial idea of recurrent blurring
+Developed by:
+    Dmitrii Zhdan (dzhdan@nvidia.com)
+    Tim Cheblokov (ttcheblokov@nvidia.com)
+
+Contributions:
+    Oles Shyshkovtsov, 4A GAMES
+        Recurrent blurring concept
+    Ivan Fedorov, NVIDIA
+        Initial API design
+    Ganesh Mamadapu, "Ganaboy2K", "DSLE" author
+        Feedback and generic improvements based on NRD usage in "Dark Souls 2: PT"
+    Justin McTavish Avola, "Aeternitae"
+        Invaluable testing on AMD/Linux
+
+Special thanks:
+    Pawel Kozlowski, NVIDIA
+    Evgeny Makarov, NVIDIA
+    Ivan Povarov, NVIDIA
 */
 
 #pragma once
@@ -29,8 +38,8 @@ CREDITS:
 
 #define NRD_VERSION_MAJOR 4
 #define NRD_VERSION_MINOR 17
-#define NRD_VERSION_BUILD 3
-#define NRD_VERSION_DATE "30 April 2026"
+#define NRD_VERSION_BUILD 4
+#define NRD_VERSION_DATE "2 May 2026"
 
 #if defined(_WIN32)
     #define NRD_CALL __stdcall
