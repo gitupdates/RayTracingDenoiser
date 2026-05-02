@@ -266,6 +266,16 @@ NOISY INPUTS:
 
 #endif
 
+// Wave intrinsics
+// ( Optional ) used only to enhance image quality
+#ifndef NRD_SUPPORTS_WAVE_INTRINSICS
+    #if( defined( NRD_COMPILER_DXC ) || defined( NRD_COMPILER_PSSLC ) || defined( NRD_COMPILER_UNREAL_ENGINE ) )
+        #define NRD_SUPPORTS_WAVE_INTRINSICS 1
+    #else
+        #define NRD_SUPPORTS_WAVE_INTRINSICS 0
+    #endif
+#endif
+
 //=================================================================================================================================
 // GLSL
 //=================================================================================================================================
